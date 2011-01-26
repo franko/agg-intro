@@ -34,7 +34,7 @@ Vertex Source Concept
 
 In order to understand how AGG handle geometrical shapes we need to understand the concept of "vertex source". This concept is not formally defined but it is required by the C++ interface for the various function template definitions.
 
-So what is a vertex source ? The question is very simple, any class that implements the following methods::
+So what is a vertex source ? The answer is very simple, any class that implements the following methods::
 
   void rewind(unsigned path_id);
   unsigned vertex(double* x, double* y);

@@ -31,3 +31,4 @@ Contents:
 
    rendering-buffer.rst
    vertex-source.rst
+   transforms.rst
