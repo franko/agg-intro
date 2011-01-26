@@ -30,3 +30,4 @@ Contents:
    :maxdepth: 2
 
    rendering-buffer.rst
+   vertex-source.rst

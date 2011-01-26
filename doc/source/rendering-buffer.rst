@@ -1,3 +1,23 @@
+.. Copyright (c) 2011 Francesco Abbate
+   
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+
 .. highlight:: c++
 
 Rendering Buffer
@@ -62,3 +82,54 @@ We said before that a pixel format is able to adress each pixel. To illustrate t
    void blend_pixel(int x, int y, const color_type& c, int8u cover);
 
 These methods, respectively, write a pixel and blend a pixel to a given location. We note that the ``color_type`` here is just :cpp:type:`agg::rgba8` and not something like :cpp:type:`agg::bgr8` as you could have guessed. The rationale of this choice is that you generally work with colors using either agg::rgba or agg::rgba8 format and they get converted to the good format on the fly depending on the type of the pixel format of the rendering buffer. This turns out to be a very convenient feature that is made easy by C++ template mechanisms.
+
+Drawing Something into the Rendering Buffer
+-------------------------------------------
+
+The AGG Library is not designed to draw directly into the rendering buffer but there is nothing wrong into the idea of drawing directly using primitives that works directly at pixel level. Of course you know at this point that to address the pixel into a rendering buffer you need to use a pixel format object that wrap the rendering buffer by providing methods for writing pixels at specific locations.
+
+Let us give a look at some of the methods we can use to draw some pixels. We look into the class :cpp:class:`pixfmt_alpha_blend_rgb` and we note the following methods that looks useful::
+
+ void copy_hline(int x, int y, unsigned len, const color_type& c);
+ void copy_vline(int x, int y, unsigned len, const color_type& c);
+ void copy_pixel(int x, int y, const color_type& c);
+
+These methods are very easy to understand, they write some pixels with the given color, nothing else. The first one writes horizontal lines with a given length, the second vertical lines and the last one just one pixel.
+
+You may wondering what is actually the type :cpp:type:`color_type`. If you remember the type :cpp:type:`pixfmt_bgr24` is defined as ``pixfmt_alpha_blend_rgb<blender_rgb<rgba8, order_bgr>, rendering_buffer>`` and if you dig into the header file you will see that :cpp:type:`color_type` in this case will be actually a simple :cpp:type:`agg::rgba8`.
+
+Since the methods are very primitive we just write a very simple geometric figure, a rectangle drawn with red color. I'm sure that at this point you know how to do that, it is very simple::
+  
+  agg::rgba8 red(160, 0, 0);
+
+  // we define a rectangle
+  agg::rect_i r(20, 20, 40, 38);
+ 
+  unsigned dx = r.x2 - r.x1;
+  unsigned dy = r.y2 - r.y1;
+
+  // we draw the four side of the rectangle
+  pixf.copy_hline(r.x1, r.y1, dx, red);
+  pixf.copy_hline(r.x1, r.y2, dx, red);
+  pixf.copy_vline(r.x1, r.y1, dy, red);
+  pixf.copy_vline(r.x2, r.y1, dy, red);
+
+We have taken the opportunity to illustrate an useful structure defined in the ``agg_basics.h`` header file, :cpp:type:`agg::rect_i`. This latter is a very simple structure that identify a rectangle by storing the two edges. These have coordinates (x1, y1) and (x2, y2). The type :cpp:type:`agg::rect_i` is actually defined as ``agg::rect_base<int>`` and so you can guess that it can be used also for vertex of type :cpp:type:`double` if needed.
+
+We don't need to spend more time on this very simple example and we make just a final remark. If you attempt to write in a pixel format rendering buffer the coordinates that you provide are not checked and you can cause a memory fault if you write outside of the boundary of the buffer.
+
+You may wonder if there is an AGG class that can perform an automatic check of the coordinates and clip the drawing operation to stay inside the rendering buffer. This structure actually exist and it is the :cpp:class:`renderer_base`. Its instantiation is trivial as it just get a reference to a pixel format, so we could declare it as follow::
+
+  agg::renderer_base<agg::pixfmt_bgr24> rb(pixf);
+
+The renderer_base will allow basically the same kind of operation allowed by a pixel format but in addition it will check for out of boundary pixel and will exclude them from the drawing operations so that writing is always safe.
+
+You have also certainly remarked that the renderer_base takes a type parameter which is the type of the pixel format, in this case :cpp:type:`agg::pixfmt_bgr24`.
+
+Summary
+-------
+
+In this chapter we have seen what are the basic structure to store the image like a rendering buffer and a pixel format. We have seen also how different type of pixel format can play and how to use template parameters to define our custom types.
+
+You may wonder where are the more advanced methods to draw more complex geometrical shapes like poygons, lines etc. We will see in the next chapter that this is normally accomplished using VertexSource objects and a rasterizer object that take the VertexSource and draw for us into the rendering buffer. This will be hopefully more clear in the next chapters.
+
