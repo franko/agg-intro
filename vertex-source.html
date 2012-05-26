@@ -1,0 +1,188 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Geometric Shapes &mdash; Introduction to AGG Library v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Introduction to AGG Library v0.1 documentation" href="index.html" />
+    <link rel="next" title="Vertex Source Transforms" href="transforms.html" />
+    <link rel="prev" title="Rendering Buffer" href="rendering-buffer.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="transforms.html" title="Vertex Source Transforms"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="rendering-buffer.html" title="Rendering Buffer"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Introduction to AGG Library v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="geometric-shapes">
+<h1>Geometric Shapes<a class="headerlink" href="#geometric-shapes" title="Permalink to this headline">¶</a></h1>
+<p>Right now we have been how to work with rendering buffer and how to write or blend some pixels at some specific location. Of course there is much more than that in a library for 2D graphics and in this chapter we will see how to define some geometric shapes like, polygons, lines, circles etc. We will see that AGG does use templates and it is able to provide a lot of flexibity by providing at the same time optimal performance with compile time optimizations.</p>
+<p>We well see that you can combine toghether geometric primitives on any kind with geometric transformations to build composite objects in a very powerful and flexible way. For the other side the drawback is that there are no simple C-style inteface to create geometrical objects but we will see that you can create one if it is needed or useful for your application.</p>
+<div class="section" id="vertex-source-concept">
+<span id="vs-methods"></span><h2>Vertex Source Concept<a class="headerlink" href="#vertex-source-concept" title="Permalink to this headline">¶</a></h2>
+<p>In order to understand how AGG handle geometrical shapes we need to understand the concept of &#8220;vertex source&#8221;. This concept is not formally defined but it is required by the C++ interface for the various function template definitions.</p>
+<p>So what is a vertex source ? The answer is very simple, any class that implements the following methods:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">void</span> <span class="n">rewind</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">path_id</span><span class="p">);</span>
+<span class="kt">unsigned</span> <span class="n">vertex</span><span class="p">(</span><span class="kt">double</span><span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="kt">double</span><span class="o">*</span> <span class="n">y</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>either as virtual or non-virtual methods. There is also an additional method which is defined in some classes but which is not part of the vertex source concept:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">void</span> <span class="n">approximation_scale</span><span class="p">(</span><span class="kt">double</span> <span class="n">scale</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>For the moment let us focus on the first two methods but let us explain before how a vertex source works. This kind of object is supposed to provide, when requested, a sequence of vertices and a related command. The command should indicate the type of operations that shold be performed when going to the vertex coordinates. The more widely used type of operations are &#8216;move_to&#8217;, to indicate a move to the point and &#8216;line_to&#8217; to indicate a line drawn up to the given vertex. The complete list of the commands is defined in <tt class="docutils literal"><span class="pre">agg_basics.h</span></tt>:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">enum</span> <span class="n">path_commands_e</span>
+<span class="p">{</span>
+    <span class="n">path_cmd_stop</span>     <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>        <span class="c1">//----path_cmd_stop</span>
+    <span class="n">path_cmd_move_to</span>  <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>        <span class="c1">//----path_cmd_move_to</span>
+    <span class="n">path_cmd_line_to</span>  <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>        <span class="c1">//----path_cmd_line_to</span>
+    <span class="n">path_cmd_curve3</span>   <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>        <span class="c1">//----path_cmd_curve3</span>
+    <span class="n">path_cmd_curve4</span>   <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>        <span class="c1">//----path_cmd_curve4</span>
+    <span class="n">path_cmd_curveN</span>   <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>        <span class="c1">//----path_cmd_curveN</span>
+    <span class="n">path_cmd_catrom</span>   <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>        <span class="c1">//----path_cmd_catrom</span>
+    <span class="n">path_cmd_ubspline</span> <span class="o">=</span> <span class="mi">7</span><span class="p">,</span>        <span class="c1">//----path_cmd_ubspline</span>
+    <span class="n">path_cmd_end_poly</span> <span class="o">=</span> <span class="mh">0x0F</span><span class="p">,</span>     <span class="c1">//----path_cmd_end_poly</span>
+    <span class="n">path_cmd_mask</span>     <span class="o">=</span> <span class="mh">0x0F</span>      <span class="c1">//----path_cmd_mask</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>In the same file there is also the definition for some simple test functions like the followings:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">bool</span> <span class="n">is_stop</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">c</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="n">is_move_to</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">c</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="n">is_line_to</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">c</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="n">is_curve</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">c</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This latter function, for example, tests if the command is a <tt class="docutils literal"><span class="pre">curve3</span></tt> or a <tt class="docutils literal"><span class="pre">curve4</span></tt>.</p>
+<p>You don&#8217;t need to master all the path commands to do useful drawings with AGG since most function or class will process the commands and perform the related operation automatically but having a basic understanding how these commands is nevertheless useful.</p>
+<p>The other method of a vertex source is the <tt class="xref cpp cpp-func docutils literal"><span class="pre">rewind()</span></tt> method. This latter just &#8216;rewind&#8217; the vertex source to the beginning so that you can unroll it again. The <tt class="docutils literal"><span class="pre">path_id</span></tt> is needed because some object can store more than one path but in most cases only the default path with <tt class="docutils literal"><span class="pre">path_id</span> <span class="pre">=</span> <span class="pre">0</span></tt> will be used.</p>
+<p>May be that now we are ready for a review of the most important type of vertex source objects.</p>
+</div>
+<div class="section" id="path-storage-object">
+<h2>Path Storage Object<a class="headerlink" href="#path-storage-object" title="Permalink to this headline">¶</a></h2>
+<p>The most important geometric object that you should know is the <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::path_storage</span></tt> object. You can think to it just like an object that stores a sequence of commands with vertex coordinates and return them using the standard vertex source functions. To close the polygon you should simple call the path_storage method <tt class="xref cpp cpp-func docutils literal"><span class="pre">close_polygon()</span></tt>.</p>
+<p>You should add the commands in sequence to build the figure that you want. For example the following code snippet will build an irregular polygon:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">agg</span><span class="o">::</span><span class="n">path_storage</span> <span class="n">p</span><span class="p">;</span>
+<span class="n">p</span><span class="p">.</span><span class="n">move_to</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">);</span>
+<span class="n">p</span><span class="p">.</span><span class="n">line_to</span><span class="p">(</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">);</span>
+<span class="n">p</span><span class="p">.</span><span class="n">line_to</span><span class="p">(</span><span class="mf">28.0</span><span class="p">,</span> <span class="mf">32.0</span><span class="p">);</span>
+<span class="n">p</span><span class="p">.</span><span class="n">line_to</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">);</span>
+<span class="n">p</span><span class="p">.</span><span class="n">line_to</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span>  <span class="mf">40.0</span><span class="p">);</span>
+<span class="n">p</span><span class="p">.</span><span class="n">close_polygon</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Here a figure of what you can obtain with an antialiased rasterizer with a solid color.</p>
+<div class="figure">
+<img alt="_images/path-example-1.png" src="_images/path-example-1.png" />
+</div>
+<p>Note also that the path storage and any vertex source in general has no concept of being &#8216;filled&#8217; or not. We will see later that if the polygon is filled or not depends in the way you render it. The most common pipeline for antialised drawings use a renderer <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::renderer_scanline_aa_solid</span></tt> and a rasterizer of type <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::rasterizer_scanline_aa</span></tt>. When these this couple or renderer and rasterizer are used you will obtain filled polygons with an uniform color. You should know anyway that there are other kind of rasterizers and renderers that can be used to obtain different results. For example if you use a renderer <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::renderer_outline_aa</span></tt> and a rasterizer of type <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::rasterizer_outline_aa</span></tt> the path will be rendered as a contour line instead of being filled.</p>
+<p>You may wonder at this point if you need to adopt in your application several kind or renderers and rasterizers or if you can stick to a fixed rendering pipeline. There is no general answer to this question because each application can have different need but in general, if you want to perform only anti-aliased drawings, you can always use a <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::renderer_scanline_aa_solid</span></tt> and a <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::rasterizer_scanline_aa</span></tt>. With this kind of pipeline you can still draw lines but in this case you should use the transform <tt class="xref cpp cpp-class docutils literal"><span class="pre">conv_stroke</span></tt> that we will describe in the next section.</p>
+</div>
+<div class="section" id="other-geometric-objects">
+<h2>Other Geometric Objects<a class="headerlink" href="#other-geometric-objects" title="Permalink to this headline">¶</a></h2>
+<p>In the previous section we have seen <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::path_storage</span></tt> object. While this object is very flexible and can be used to describe all kind of geometric shapes there are a few other vertex source primitive types. Actually there are not so many of them and we will just discuss the <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::ellipse</span></tt> object because it will be also useful to illustrate some important idea.</p>
+<p>The <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::ellipse</span></tt> does not share anything with a <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::path_storage</span></tt> in term of C++ class hierarchy, all the they have in common is that they implement the basic <a class="reference internal" href="#vs-methods"><em>methods of a vertex source</em></a>. You may wonder why the ellipse object can be useful if you can describe it with a <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::path_storage</span></tt>. The answer is that this latter needs to store a fixed number of vertices that approximate the ellipse for all the possible resolution of the image. The problem is that if you draw a small circle a few vertices can be enough but if the circle is big you are going to need a lot of vertices to have a decent approximation. We will see that with an <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::ellipse</span></tt> object the number of points will be adapted on the fly, you just need to use the <tt class="xref cpp cpp-func docutils literal"><span class="pre">approximation_scale()</span></tt> method. Actually the <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::ellipse</span></tt> does not store all the coordinates of the vertices but generetes them on the fly when needed using the mathematical equations. As a side effect you will have also a benefit in term of memory usage because an ellipse object will use a very small amount of memory indipendently of the approximation level that you may request.</p>
+<p>At this point we need to explain the <tt class="xref cpp cpp-func docutils literal"><span class="pre">approximation_scale()</span></tt> method. <tt class="xref cpp cpp-func docutils literal"><span class="pre">approximation_scale()</span></tt> we need to go back to the coordinates specifications. The coordinates are actually given as double precision floating point number and they may or may not map directly to pixel coordinates. For example we can map some logical coordinates ranging from 0 to 1 to an huge viewport of size 1280x1280. The problem at this point is that an <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::ellipse</span></tt> object does not know the mapping between logical coordinates and viewport coordinates. So the idea is that to let <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::ellipse</span></tt> adjust correctly the level of approximation you should call the method <tt class="xref cpp cpp-func docutils literal"><span class="pre">approximation_scale()</span></tt> and pass as an argument the ratio between the viewport coordinates and the logical coordinates. So in the example of the viewport of size 1280x1280 we would need to use <tt class="xref cpp cpp-func docutils literal"><span class="pre">approximation_scale()</span></tt> with an scale argument of 1280.</p>
+<p>We will see later that the <tt class="xref cpp cpp-func docutils literal"><span class="pre">approximation_scale()</span></tt> is also important with some kind of transformation like Bezier curves that are supposed to generate smooth curves based on a few vertices and some mathematical equations.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Geometric Shapes</a><ul>
+<li><a class="reference internal" href="#vertex-source-concept">Vertex Source Concept</a></li>
+<li><a class="reference internal" href="#path-storage-object">Path Storage Object</a></li>
+<li><a class="reference internal" href="#other-geometric-objects">Other Geometric Objects</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="rendering-buffer.html"
+                        title="previous chapter">Rendering Buffer</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="transforms.html"
+                        title="next chapter">Vertex Source Transforms</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/vertex-source.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="transforms.html" title="Vertex Source Transforms"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="rendering-buffer.html" title="Rendering Buffer"
+             >previous</a> |</li>
+        <li><a href="index.html">Introduction to AGG Library v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Francesco Abbate.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,207 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Rendering Buffer &mdash; Introduction to AGG Library v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Introduction to AGG Library v0.1 documentation" href="index.html" />
+    <link rel="next" title="Geometric Shapes" href="vertex-source.html" />
+    <link rel="prev" title="Welcome to Introduction to AGG Library’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="vertex-source.html" title="Geometric Shapes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Introduction to AGG Library’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Introduction to AGG Library v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="rendering-buffer">
+<h1>Rendering Buffer<a class="headerlink" href="#rendering-buffer" title="Permalink to this headline">¶</a></h1>
+<p>The class <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::rendering_buffer</span></tt> is used to store un image in pixel format with given width and height. The rendering buffer hold a pointer to an <tt class="xref cpp cpp-type docutils literal"><span class="pre">unsigned</span> <span class="pre">char</span></tt> buffer used to store the image. The rendering buffer does not allocate the memory buffer and is not responsable for its deallocation.</p>
+<p>From the logical point of view the rendering buffer is composed of lines and each line it is associated conventionally to the y coordinate. This latter can span the values from <tt class="docutils literal"><span class="pre">0</span></tt> to <tt class="docutils literal"><span class="pre">width</span> <span class="pre">-</span> <span class="pre">1</span></tt> to identify all the lines of the buffer. The other coordinate identify the columns along the horizontal axe x but we will see that with a rendering buffer you cannot address a particular column or pixel, you can only adress lines.</p>
+<p>The rendering buffer does not have any information about how the pixels are stored in each line and it is therefore unable to address a specific pixel. If you need to adress at pixel level you should use a pixel format object.</p>
+<div class="section" id="usage-of-rendering-buffer">
+<h2>Usage of Rendering Buffer<a class="headerlink" href="#usage-of-rendering-buffer" title="Permalink to this headline">¶</a></h2>
+<p>We present here a simple example that shows how to create a rendering buffer, how to add pixel format information and how to draw a rectangle using elementary pixel-level operations.</p>
+<p>Here the code to to create a rendering buffer and build on top of it a pixel format object:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">const</span> <span class="kt">unsigned</span> <span class="n">w</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="mi">50</span><span class="p">;</span>
+
+<span class="kt">unsigned</span> <span class="n">row_size</span> <span class="o">=</span> <span class="n">pixel_type</span><span class="o">::</span><span class="n">pix_width</span> <span class="o">*</span> <span class="n">w</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="n">buf_size</span> <span class="o">=</span> <span class="n">row_size</span> <span class="o">*</span> <span class="n">h</span><span class="p">;</span>
+<span class="n">agg</span><span class="o">::</span><span class="n">pod_array</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="o">&gt;</span> <span class="n">img_buf</span><span class="p">(</span><span class="n">buf_size</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="n">stride</span> <span class="o">=</span> <span class="p">(</span><span class="n">app_flip_y</span> <span class="o">?</span> <span class="o">-</span><span class="n">row_size</span> <span class="o">:</span> <span class="n">row_size</span><span class="p">);</span>
+<span class="n">agg</span><span class="o">::</span><span class="n">rendering_buffer</span> <span class="n">rbuf</span><span class="p">(</span><span class="n">img_buf</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">stride</span><span class="p">);</span>
+<span class="n">agg</span><span class="o">::</span><span class="n">pixfmt_bgr24</span> <span class="n">pixf</span><span class="p">(</span><span class="n">rbuf</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>In the first part we allocate the memory for the rendering buffer. To know how much memory we allocate we multiply the width and the height of the buffer by the pixel width <tt class="xref cpp cpp-member docutils literal"><span class="pre">pixel_type::pix_width</span></tt>. This latter paremeter tell us how much space is needed to store a single pixel.</p>
+<p>In this example we have used the automatic array <tt class="xref cpp cpp-class docutils literal"><span class="pre">agg::pod_array</span></tt> to allocate the space but we could have simply used a <tt class="docutils literal"><span class="pre">new</span> <span class="pre">unsigned</span> <span class="pre">char[]</span></tt> allocation, the only difference would have been that in this latter case we need to explicitely <tt class="docutils literal"><span class="pre">delete</span> <span class="pre">[]</span></tt> the buffer when we have finished.</p>
+<p>The rendering buffer is allocated using the following constructor:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="c1">// definition of rendering_buffer</span>
+<span class="c1">// typedef row_accessor&lt;int8u&gt; rendering_buffer;</span>
+<span class="n">rendering_buffer</span><span class="p">(</span><span class="n">int8u</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">width</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">height</span><span class="p">,</span> <span class="kt">int</span> <span class="n">stride</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Incidentally you can note that the rendering_buffer is defined as a specialization of the <tt class="xref cpp cpp-class docutils literal"><span class="pre">row_accessor</span></tt> type. The constructor arguments are quite self exaplanatory, the first argument is just the pointer to the memory that we have allocated and the other arguments are the width, height and another argument, the stride. This latter deserve some more explications because it plays an important role about how the row lines are packed.</p>
+<p>The stride is actually the offset, expressed in bytes, between the beginning of two consecutive lines in the buffer. To better understand its meaning we can imagine to have a unsigned char pointer <tt class="docutils literal"><span class="pre">p</span></tt> that point to the beginning of a line in the buffer. In this case we can obtain the pointer to the following line by taking <tt class="docutils literal"><span class="pre">p</span> <span class="pre">+</span> <span class="pre">stride</span></tt>.</p>
+<p>One subtle point about the stride is that is can be either positive or negative. When the stride is negative the logical line of the buffer at y = 0 is stored at the end of the buffer. If the stride is positive then the logical line at y = 0 is stored at the very beginning of the buffer. From the logical point of view the two possibility are equally fine but having the buffer stored in different way can be convenient when you need to pass the buffer to other libraries that can require a specific order for the lines.</p>
+<p>The better way to retrive the pointer to a particular line of the buffer is to use the <tt class="docutils literal"><span class="pre">row_ptr</span></tt> method. It does have the following signature:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">int8u</span><span class="o">*</span> <span class="n">row_ptr</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This method will work correctly when the stride is positive or negative and if the more safe way to get the address of a particular line of the buffer.</p>
+<p>You can see in the code snippet that the following line after the creation of the rendering_buffer is the definition of the pixel_format. The declaration of this latter is trivial and it just takes a reference to the rendering_buffer.</p>
+<p>Now we can go back to our code snippet and look at the last line where we instantiate an object of type <tt class="xref cpp cpp-type docutils literal"><span class="pre">agg::pixfmt_bgr24</span></tt>. This latter is what we call a &#8220;pixel format&#8221; object. It does have all the methods that a rendering_buffer has so it is basically a rendering buffer but in addition it does know about how pixel are packed and is therefore capable of addressing each pixel individually.</p>
+<p>In the example above we have used the pixel format <tt class="docutils literal"><span class="pre">pixfmt_bgr24</span></tt>. This latter is a quite common choice and is also the default format on MS Windows platform. Other popular format on modern computer are pixfmt_rgb24 and pixfmt_rgba32. The <tt class="docutils literal"><span class="pre">pixfmt_bgr24</span></tt> is defined as follow:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">typedef</span> <span class="n">pixfmt_alpha_blend_rgb</span><span class="o">&lt;</span><span class="n">blender_rgb</span><span class="o">&lt;</span><span class="n">rgba8</span><span class="p">,</span> <span class="n">order_bgr</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">rendering_buffer</span><span class="o">&gt;</span> <span class="n">pixfmt_bgr24</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>We said before that a pixel format is able to adress each pixel. To illustrate that we can look at two methods of <tt class="docutils literal"><span class="pre">pixfmt_alpha_blend_rgb</span></tt>:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">void</span> <span class="n">copy_pixel</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">,</span> <span class="k">const</span> <span class="n">color_type</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">blend_pixel</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">,</span> <span class="k">const</span> <span class="n">color_type</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">,</span> <span class="n">int8u</span> <span class="n">cover</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>These methods, respectively, write a pixel and blend a pixel to a given location. We note that the <tt class="docutils literal"><span class="pre">color_type</span></tt> here is just <tt class="xref cpp cpp-type docutils literal"><span class="pre">agg::rgba8</span></tt> and not something like <tt class="xref cpp cpp-type docutils literal"><span class="pre">agg::bgr8</span></tt> as you could have guessed. The rationale of this choice is that you generally work with colors using either agg::rgba or agg::rgba8 format and they get converted to the good format on the fly depending on the type of the pixel format of the rendering buffer. This turns out to be a very convenient feature that is made easy by C++ template mechanisms.</p>
+</div>
+<div class="section" id="drawing-something-into-the-rendering-buffer">
+<h2>Drawing Something into the Rendering Buffer<a class="headerlink" href="#drawing-something-into-the-rendering-buffer" title="Permalink to this headline">¶</a></h2>
+<p>The AGG Library is not designed to draw directly into the rendering buffer but there is nothing wrong into the idea of drawing directly using primitives that works directly at pixel level. Of course you know at this point that to address the pixel into a rendering buffer you need to use a pixel format object that wrap the rendering buffer by providing methods for writing pixels at specific locations.</p>
+<p>Let us give a look at some of the methods we can use to draw some pixels. We look into the class <tt class="xref cpp cpp-class docutils literal"><span class="pre">pixfmt_alpha_blend_rgb</span></tt> and we note the following methods that looks useful:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">void</span> <span class="n">copy_hline</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">len</span><span class="p">,</span> <span class="k">const</span> <span class="n">color_type</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">copy_vline</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">len</span><span class="p">,</span> <span class="k">const</span> <span class="n">color_type</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">copy_pixel</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">,</span> <span class="k">const</span> <span class="n">color_type</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>These methods are very easy to understand, they write some pixels with the given color, nothing else. The first one writes horizontal lines with a given length, the second vertical lines and the last one just one pixel.</p>
+<p>You may wondering what is actually the type <tt class="xref cpp cpp-type docutils literal"><span class="pre">color_type</span></tt>. If you remember the type <tt class="xref cpp cpp-type docutils literal"><span class="pre">pixfmt_bgr24</span></tt> is defined as <tt class="docutils literal"><span class="pre">pixfmt_alpha_blend_rgb&lt;blender_rgb&lt;rgba8,</span> <span class="pre">order_bgr&gt;,</span> <span class="pre">rendering_buffer&gt;</span></tt> and if you dig into the header file you will see that <tt class="xref cpp cpp-type docutils literal"><span class="pre">color_type</span></tt> in this case will be actually a simple <tt class="xref cpp cpp-type docutils literal"><span class="pre">agg::rgba8</span></tt>.</p>
+<p>Since the methods are very primitive we just write a very simple geometric figure, a rectangle drawn with red color. I&#8217;m sure that at this point you know how to do that, it is very simple:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">agg</span><span class="o">::</span><span class="n">rgba8</span> <span class="n">red</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+<span class="c1">// we define a rectangle</span>
+<span class="n">agg</span><span class="o">::</span><span class="n">rect_i</span> <span class="n">r</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">38</span><span class="p">);</span>
+
+<span class="kt">unsigned</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">r</span><span class="p">.</span><span class="n">x2</span> <span class="o">-</span> <span class="n">r</span><span class="p">.</span><span class="n">x1</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">r</span><span class="p">.</span><span class="n">y2</span> <span class="o">-</span> <span class="n">r</span><span class="p">.</span><span class="n">y1</span><span class="p">;</span>
+
+<span class="c1">// we draw the four side of the rectangle</span>
+<span class="n">pixf</span><span class="p">.</span><span class="n">copy_hline</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">x1</span><span class="p">,</span> <span class="n">r</span><span class="p">.</span><span class="n">y1</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">red</span><span class="p">);</span>
+<span class="n">pixf</span><span class="p">.</span><span class="n">copy_hline</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">x1</span><span class="p">,</span> <span class="n">r</span><span class="p">.</span><span class="n">y2</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">red</span><span class="p">);</span>
+<span class="n">pixf</span><span class="p">.</span><span class="n">copy_vline</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">x1</span><span class="p">,</span> <span class="n">r</span><span class="p">.</span><span class="n">y1</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">red</span><span class="p">);</span>
+<span class="n">pixf</span><span class="p">.</span><span class="n">copy_vline</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">x2</span><span class="p">,</span> <span class="n">r</span><span class="p">.</span><span class="n">y1</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">red</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>We have taken the opportunity to illustrate an useful structure defined in the <tt class="docutils literal"><span class="pre">agg_basics.h</span></tt> header file, <tt class="xref cpp cpp-type docutils literal"><span class="pre">agg::rect_i</span></tt>. This latter is a very simple structure that identify a rectangle by storing the two edges. These have coordinates (x1, y1) and (x2, y2). The type <tt class="xref cpp cpp-type docutils literal"><span class="pre">agg::rect_i</span></tt> is actually defined as <tt class="docutils literal"><span class="pre">agg::rect_base&lt;int&gt;</span></tt> and so you can guess that it can be used also for vertex of type <tt class="xref cpp cpp-type docutils literal"><span class="pre">double</span></tt> if needed.</p>
+<p>We don&#8217;t need to spend more time on this very simple example and we make just a final remark. If you attempt to write in a pixel format rendering buffer the coordinates that you provide are not checked and you can cause a memory fault if you write outside of the boundary of the buffer.</p>
+<p>You may wonder if there is an AGG class that can perform an automatic check of the coordinates and clip the drawing operation to stay inside the rendering buffer. This structure actually exist and it is the <tt class="xref cpp cpp-class docutils literal"><span class="pre">renderer_base</span></tt>. Its instantiation is trivial as it just get a reference to a pixel format, so we could declare it as follow:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">agg</span><span class="o">::</span><span class="n">renderer_base</span><span class="o">&lt;</span><span class="n">agg</span><span class="o">::</span><span class="n">pixfmt_bgr24</span><span class="o">&gt;</span> <span class="n">rb</span><span class="p">(</span><span class="n">pixf</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The renderer_base will allow basically the same kind of operation allowed by a pixel format but in addition it will check for out of boundary pixel and will exclude them from the drawing operations so that writing is always safe.</p>
+<p>You have also certainly remarked that the renderer_base takes a type parameter which is the type of the pixel format, in this case <tt class="xref cpp cpp-type docutils literal"><span class="pre">agg::pixfmt_bgr24</span></tt>.</p>
+</div>
+<div class="section" id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
+<p>In this chapter we have seen what are the basic structure to store the image like a rendering buffer and a pixel format. We have seen also how different type of pixel format can play and how to use template parameters to define our custom types.</p>
+<p>You may wonder where are the more advanced methods to draw more complex geometrical shapes like poygons, lines etc. We will see in the next chapter that this is normally accomplished using VertexSource objects and a rasterizer object that take the VertexSource and draw for us into the rendering buffer. This will be hopefully more clear in the next chapters.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Rendering Buffer</a><ul>
+<li><a class="reference internal" href="#usage-of-rendering-buffer">Usage of Rendering Buffer</a></li>
+<li><a class="reference internal" href="#drawing-something-into-the-rendering-buffer">Drawing Something into the Rendering Buffer</a></li>
+<li><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Introduction to AGG Library&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="vertex-source.html"
+                        title="next chapter">Geometric Shapes</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/rendering-buffer.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="vertex-source.html" title="Geometric Shapes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Introduction to AGG Library’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Introduction to AGG Library v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Francesco Abbate.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
