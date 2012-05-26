@@ -1,5 +1,5 @@
 
-.. Copyright (c) 2011 Francesco Abbate
+.. Copyright (c) 2011, 2012 Francesco Abbate
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -19,8 +19,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 
-Welcome to Introduction to AGG Library's documentation!
-=======================================================
+Welcome to Francesco's Introduction to AGG Library
+==================================================
 
 In this introduction we will explain how to use the AGG C++ library for your project. AGG (Anti Grain Geomery) is an high-quality library written in C++ for producing antialised images either in the screen or offline in rendering buffer.
 
