@@ -14,6 +14,6 @@ The documentation provided in this site can be freely used and adapted as far as
 Please note
 -----------
 
-The AGG Library is no longer under developed and its author, Maxim Shemarev, sadly passed away. However the library is mature and some bug fixes are provided by the package maintainers for some linux distrubutions so it can be used without major concerns.
+The AGG Library is no longer under developement and its author, Maxim Shemarev, sadly passed away. However the library is mature and some bug fixes are provided by the package maintainers of various linux distrubutions so it can be used without major concerns.
 
 The library lacks good documentation and even this introduction is largely incomplete. If you know the AGG Library well enough you may consider contributing to the documentation provided here.
